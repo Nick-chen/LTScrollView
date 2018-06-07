@@ -17,7 +17,8 @@ public class LTAdvancedManager: UIView {
     public typealias LTAdvancedDidSelectIndexHandle = (Int) -> Void
     @objc public var advancedDidSelectIndexHandle: LTAdvancedDidSelectIndexHandle?
     @objc public weak var delegate: LTAdvancedScrollViewDelegate?
-    
+    public typealias getHeaderFlagView = () -> UIView
+    @objc public var handleHeaderFlag: getHeaderFlagView!
     //设置悬停位置Y值
     @objc public var hoverY: CGFloat = 0
     
@@ -43,7 +44,7 @@ public class LTAdvancedManager: UIView {
     private var pageView: LTPageView!
     private var layout: LTLayout
     
-    @objc public init(frame: CGRect, viewControllers: [UIViewController], titles: [String], currentViewController:UIViewController, layout: LTLayout, headerViewHandle handle: () -> UIView) {
+    @objc public init(frame: CGRect, viewControllers: [UIViewController], titles: [String], currentViewController:UIViewController, layout: LTLayout, headerViewHandle handle: @escaping () -> UIView) {
         UIScrollView.initializeOnce()
         self.viewControllers = viewControllers
         self.titles = titles
@@ -51,10 +52,19 @@ public class LTAdvancedManager: UIView {
         self.layout = layout
         super.init(frame: frame)
         pageView = setupPageViewConfig(currentViewController: currentViewController, layout: layout)
+        handleHeaderFlag = handle
         setupSubViewsConfig(handle)
     }
     
-    
+    @objc public func updateTitlesAndViewControllers(titles:[String], vcs:[UIViewController],currentViewController: UIViewController,layout: LTLayout) {
+        self.viewControllers = vcs;
+        self.titles = titles
+        self.currentViewController = currentViewController
+        self.layout = layout
+        pageView.addChildVcBlock = nil;
+        pageView.updateTitleAndControllers(titles: titles, currentViewController: currentViewController, controllers: vcs, layout: layout)
+        setupSubViewsConfig(self.handleHeaderFlag)
+    }
     
     required public init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")

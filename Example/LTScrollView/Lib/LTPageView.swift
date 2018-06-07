@@ -229,6 +229,51 @@ public class LTPageView: UIView {
 }
 
 extension LTPageView {
+    public func updateTitleAndControllers(titles:[String],currentViewController: UIViewController,controllers:[UIViewController], layout:LTLayout) {
+        //移除旧数据
+        removeOldSubViewInfo()
+        //重新初始化数据
+        self.glt_clickIndex = 0;
+        self.currentViewController = currentViewController
+        self.viewControllers = controllers
+        self.titles = titles
+        self.layout = layout
+        guard viewControllers.count == titles.count else {
+            fatalError("控制器数量和标题数量不一致")
+        }
+        
+        scrollView.contentSize = CGSize(width: self.bounds.width * CGFloat(self.titles.count), height: 0)
+        
+        self.glt_lineWidths.removeAll()
+        self.glt_textWidths.removeAll()
+        
+        buttonsLayout()
+        pageTitleView.isHidden = layout.isHiddenPageBottomLine
+        sliderLineView.isHidden = layout.isHiddenSlider
+        if layout.isHiddenSlider {
+            sliderLineView.frame.size.height = 0.0
+        }
+        if #available(iOS 11.0, *) {
+            scrollView.contentInsetAdjustmentBehavior = .never
+            sliderScrollView.contentInsetAdjustmentBehavior = .never
+        }
+        
+    }
+    
+    private func removeOldSubViewInfo(){
+        for vc in self.viewControllers {
+            vc.removeFromParentViewController()
+        }
+        
+        for btn in self.glt_buttons {
+            btn.removeFromSuperview()
+        }
+        
+        self.glt_buttons.removeAll()
+    }
+}
+
+extension LTPageView {
     
     
     private func buttonsLayout() {
@@ -493,6 +538,10 @@ extension LTPageView {
     //MARK: 让title的ScrollView滚动到中心点位置
     private func setupSlierScrollToCenter(offsetX: CGFloat, index: Int)  {
         
+        if glt_buttons.isEmpty {
+            return
+        }
+        
         let currentButton = glt_buttons[index]
         
         let btnCenterX = currentButton.center.x
@@ -517,6 +566,14 @@ extension LTPageView {
             return false
         }
         
+        //避免更新后移除数据出现为空取值
+        if glt_textWidths.isEmpty {
+            return false
+        }
+        
+        if glt_buttons.isEmpty {
+            return false
+        }
         
         //目的是改变它的值，让制滑动第一个和最后一个的时候（-0.5），导致数组下标越界
         var offsetX = offsetX
